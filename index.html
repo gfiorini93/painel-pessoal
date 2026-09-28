@@ -145,13 +145,17 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
 .glowstop-3 { stop-color: var(--cyan); stop-opacity: 0; }
 .core-forte { stroke: var(--cyan); }
 .core-suave { stroke: var(--cyan-soft); }
-.agente-badge { font-family: var(--display); font-size: 14px; letter-spacing: .06em; color: var(--cyan-soft); transition: opacity .25s; }
-.avatar-central { position: absolute; inset: 0; display: none; place-items: center; }
-.avatar-central img { width: 66%; height: 66%; border-radius: 50%; object-fit: cover; box-shadow: 0 0 26px var(--cyan), 0 0 0 3px var(--cyan) inset; }
-.core.mostrando-avatar .clock { opacity: 0; }
-.core.mostrando-avatar .avatar-central { display: grid; }
-.agente-badge { display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
-.agente-badge img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 6px var(--cyan); }
+.avatar-central { position: absolute; inset: 0; display: grid; place-items: center; }
+.avatar-central img { width: 62%; height: 62%; border-radius: 50%; object-fit: cover; box-shadow: 0 0 26px var(--cyan), 0 0 0 3px var(--cyan) inset; transition: box-shadow .4s; }
+.clock { position: absolute; left: 0; right: 0; bottom: 8%; text-align: center; }
+.clock .time { font-family: var(--display); font-weight: 700; font-size: clamp(18px, 5vw, 24px); color: #eaffff; text-shadow: 0 0 10px rgba(0,0,0,.6), 0 0 12px var(--cyan); background: rgba(2,7,13,.55); padding: 2px 12px; border-radius: 20px; display: inline-block; }
+.nome-agente { text-align: center; margin: 2px 0 10px; font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: .1em; color: var(--cyan); text-shadow: 0 0 12px var(--cyan); transition: color .3s; }
+.mini-agentes { display: flex; justify-content: center; gap: 22px; margin: 0 0 14px; }
+.mini-agente { display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: .45; transform: scale(.92); transition: opacity .3s, transform .3s; }
+.mini-agente img { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid var(--mc); box-shadow: 0 0 0 rgba(0,0,0,0); transition: box-shadow .3s; }
+.mini-agente span { font-family: var(--display); font-size: 11px; letter-spacing: .05em; color: var(--mc); }
+.mini-agente.ativo { opacity: 1; transform: scale(1.1); }
+.mini-agente.ativo img { box-shadow: 0 0 14px var(--mc); }
 </style>
 </head>
 <body>
@@ -193,18 +197,24 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
         </g>
         <circle cx="150" cy="150" r="92" class="core-forte" fill="rgba(2,12,20,.85)" stroke-opacity=".5"/>
       </svg>
+      <div class="avatar-central" id="avatarCentral"><img id="avatarImg" src="avatars/jarvis.jpg" alt="Jarvis"></div>
       <div class="clock">
         <div class="time" id="time">--:--</div>
-        <div class="date" id="date"></div>
-        <div class="agente-badge" id="agenteBadge" aria-live="polite"></div>
       </div>
-      <div class="avatar-central" id="avatarCentral" aria-hidden="true"><img id="avatarImg" alt=""></div>
     </div>
   </section>
+
+  <div class="nome-agente" id="nomeAgente">JARVIS</div>
+  <div class="mini-agentes" aria-hidden="true">
+    <div class="mini-agente" id="miniCronos" style="--mc:#34e5b0"><img src="avatars/cronos.jpg" alt=""><span>Cronos</span></div>
+    <div class="mini-agente" id="miniAtena" style="--mc:#ffb020"><img src="avatars/atena.jpg" alt=""><span>Atena</span></div>
+    <div class="mini-agente" id="miniHermes" style="--mc:#b28dff"><img src="avatars/hermes.jpg" alt=""><span>Hermes</span></div>
+  </div>
 
   <div class="greet">
     <h1 id="greeting">Olá</h1>
     <p id="resumoFrase">Carregando seus dados...</p>
+    <p id="dataExtenso" style="margin-top:2px;color:var(--muted);font-size:14px;"></p>
   </div>
 
   <div class="grid">
@@ -330,40 +340,38 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
   function tick() {
     var d = new Date();
     $('time').textContent = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    if (!agenteAtivo) {
-      $('date').textContent = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
-    }
+    $('dataExtenso').textContent = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
     var h = d.getHours();
     $('greeting').textContent = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
   }
   tick(); setInterval(tick, 15000);
 
   /* ---------- agentes ---------- */
+  // Jarvis fica sempre em destaque no núcleo; quando outro agente age, ele assume
+  // o lugar por alguns segundos e depois o Jarvis volta. As vozes femininas/masculinas
+  // são escolhidas por agente em escolherVoz(), mais abaixo.
   var AGENTES = {
-    Cronos: { img: 'avatars/cronos.jpg', apresenta: 'cuida da sua agenda' },
-    Atena: { img: 'avatars/atena.jpg', apresenta: 'cuida das suas finanças' },
-    Hermes: { img: 'avatars/hermes.jpg', apresenta: 'organiza seus e-mails' },
-    Jarvis: { img: 'avatars/jarvis.jpg', apresenta: 'coordena o assistente' }
+    Cronos: { img: 'avatars/cronos.jpg', mini: 'miniCronos' },
+    Atena: { img: 'avatars/atena.jpg', mini: 'miniAtena' },
+    Hermes: { img: 'avatars/hermes.jpg', mini: 'miniHermes' },
+    Jarvis: { img: 'avatars/jarvis.jpg', mini: null }
   };
-  var agenteAtivo = false, agenteTimer = null;
-  function mostrarAgente(nome) {
-    var a = AGENTES[nome];
-    if (!a) return;
-    document.body.dataset.agente = nome;
-    agenteAtivo = true;
+  var agenteTimer = null;
+  function assumirNucleo(nome) {
+    var a = AGENTES[nome] || AGENTES.Jarvis;
+    document.body.dataset.agente = nome in AGENTES ? nome : 'Jarvis';
     $('avatarImg').src = a.img;
     $('avatarImg').alt = nome;
-    $('core').classList.add('mostrando-avatar');
-    limpar($('agenteBadge'));
-    var img = el('img'); img.src = a.img; img.alt = '';
-    $('agenteBadge').appendChild(img);
-    $('agenteBadge').appendChild(document.createTextNode(nome));
+    $('nomeAgente').textContent = (nome || 'JARVIS').toUpperCase();
+    ['miniCronos', 'miniAtena', 'miniHermes'].forEach(function (id) {
+      $(id).classList.toggle('ativo', a.mini === id);
+    });
+  }
+  function mostrarAgente(nome) {
+    if (!AGENTES[nome] || nome === 'Jarvis') { assumirNucleo('Jarvis'); clearTimeout(agenteTimer); return; }
+    assumirNucleo(nome);
     clearTimeout(agenteTimer);
-    agenteTimer = setTimeout(function () {
-      agenteAtivo = false;
-      $('core').classList.remove('mostrando-avatar');
-      limpar($('agenteBadge'));
-    }, 6000);
+    agenteTimer = setTimeout(function () { assumirNucleo('Jarvis'); }, 6000);
   }
 
   /* ---------- renderização ---------- */
@@ -544,12 +552,12 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
   }
   function alternar(nome) {
     $('reply').textContent = 'Atualizando ' + nome + '...';
-    chamar('alternar', nome, function (r) { dizer(r.resposta); mostrarAgente(r.agente); carregar(); });
+    chamar('alternar', nome, function (r) { dizer(r.resposta, r.agente); mostrarAgente(r.agente); carregar(); });
   }
   function enviar(texto) {
     if (!texto || !texto.trim()) return;
     $('send').disabled = true; $('reply').textContent = 'Pensando...';
-    chamar('comando', texto, function (r) { $('send').disabled = false; dizer(r.resposta); mostrarAgente(r.agente); carregar(); });
+    chamar('comando', texto, function (r) { $('send').disabled = false; dizer(r.resposta, r.agente); mostrarAgente(r.agente); carregar(); });
   }
 
   /* ---------- formulários ---------- */
@@ -581,7 +589,7 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
       tipo: $('gTipo').value, valor: v, descricao: $('gDesc').value,
       categoria: $('gCat').value, conta: $('gConta').value, data: $('gData').value
     }, function (r) {
-      $('gEnviar').disabled = false; dizer(r.resposta); mostrarAgente(r.agente);
+      $('gEnviar').disabled = false; dizer(r.resposta, r.agente); mostrarAgente(r.agente);
       $('gValor').value = ''; $('gDesc').value = ''; carregar();
     });
   });
@@ -595,21 +603,33 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
       titulo: $('eTitulo').value, data: $('eData').value, diaTodo: dia,
       inicio: $('eIni').value, fim: $('eFim').value, local: $('eLocal').value
     }, function (r) {
-      $('eEnviar').disabled = false; dizer(r.resposta); mostrarAgente(r.agente);
+      $('eEnviar').disabled = false; dizer(r.resposta, r.agente); mostrarAgente(r.agente);
       $('eTitulo').value = ''; $('eLocal').value = ''; carregar();
     });
   });
 
   /* ---------- voz de resposta ---------- */
   var vozOn = true;
-  function dizer(texto) {
+  // Nem todo navegador marca o gênero da voz, então escolhemos pelo nome: a Atena tenta
+  // uma voz feminina; os demais agentes tentam uma masculina. Sem sucesso, cai na primeira
+  // voz em português disponível.
+  var PADRAO_FEMININO = /maria|luciana|francisca|helena|camila|fernanda|joana|vitoria|female|feminin/i;
+  var PADRAO_MASCULINO = /daniel|ricardo|felipe|jorge|male|masculin/i;
+  function escolherVoz(agente) {
+    var vozes = (window.speechSynthesis.getVoices() || []).filter(function (v) { return /^pt/i.test(v.lang); });
+    if (!vozes.length) return null;
+    var padrao = agente === 'Atena' ? PADRAO_FEMININO : PADRAO_MASCULINO;
+    return vozes.find(function (v) { return padrao.test(v.name); }) || vozes[0];
+  }
+  function dizer(texto, agente) {
     $('reply').textContent = texto;
     if (!vozOn || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(texto);
       u.lang = 'pt-BR';
-      var v = window.speechSynthesis.getVoices().filter(function (x) { return /^pt/i.test(x.lang); })[0];
+      u.pitch = agente === 'Atena' ? 1.15 : 1;
+      var v = escolherVoz(agente);
       if (v) u.voice = v;
       window.speechSynthesis.speak(u);
     } catch (e) {}
@@ -657,6 +677,7 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
     } catch (err) { $('reply').textContent = semMic; }
   });
 
+  assumirNucleo('Jarvis');
   if (!CFG.url || !CFG.senha) mostrarLogin(''); else carregar();
   setInterval(carregar, 5 * 60 * 1000);
 })();
