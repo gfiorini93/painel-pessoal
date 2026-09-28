@@ -379,7 +379,6 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
     Hermes: { img: 'avatars/hermes.jpg', mini: 'miniHermes' },
     Jarvis: { img: 'avatars/jarvis.jpg', mini: null }
   };
-  var agenteTimer = null;
   function assumirNucleo(nome) {
     var a = AGENTES[nome] || AGENTES.Jarvis;
     document.body.dataset.agente = nome in AGENTES ? nome : 'Jarvis';
@@ -389,12 +388,6 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
     ['miniCronos', 'miniAtena', 'miniHermes'].forEach(function (id) {
       $(id).classList.toggle('ativo', a.mini === id);
     });
-  }
-  function mostrarAgente(nome) {
-    if (!AGENTES[nome] || nome === 'Jarvis') { assumirNucleo('Jarvis'); clearTimeout(agenteTimer); return; }
-    assumirNucleo(nome);
-    clearTimeout(agenteTimer);
-    agenteTimer = setTimeout(function () { assumirNucleo('Jarvis'); }, 6000);
   }
 
   /* ---------- renderização ---------- */
@@ -575,12 +568,12 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
   }
   function alternar(nome) {
     $('reply').textContent = 'Atualizando ' + nome + '...';
-    chamar('alternar', nome, function (r) { dizer(r.resposta, r.agente); mostrarAgente(r.agente); carregar(); });
+    chamar('alternar', nome, function (r) { responder(r.resposta, r.agente); carregar(); });
   }
   function enviar(texto) {
     if (!texto || !texto.trim()) return;
     $('send').disabled = true; $('reply').textContent = 'Pensando...';
-    chamar('comando', texto, function (r) { $('send').disabled = false; dizer(r.resposta, r.agente); mostrarAgente(r.agente); carregar(); });
+    chamar('comando', texto, function (r) { $('send').disabled = false; responder(r.resposta, r.agente); carregar(); });
   }
 
   /* ---------- formulários ---------- */
@@ -606,13 +599,13 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
   $('formGasto').addEventListener('submit', function (e) {
     e.preventDefault();
     var v = parseBR($('gValor').value);
-    if (!(v > 0)) { dizer('Digite um valor maior que zero.'); return; }
+    if (!(v > 0)) { $('reply').textContent = 'Digite um valor maior que zero.'; return; }
     $('gEnviar').disabled = true;
     chamar('gasto', {
       tipo: $('gTipo').value, valor: v, descricao: $('gDesc').value,
       categoria: $('gCat').value, conta: $('gConta').value, data: $('gData').value
     }, function (r) {
-      $('gEnviar').disabled = false; dizer(r.resposta, r.agente); mostrarAgente(r.agente);
+      $('gEnviar').disabled = false; responder(r.resposta, r.agente);
       $('gValor').value = ''; $('gDesc').value = ''; carregar();
     });
   });
@@ -620,13 +613,13 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
   $('formEvento').addEventListener('submit', function (e) {
     e.preventDefault();
     var dia = $('eDia').checked;
-    if (!dia && !$('eIni').value) { dizer('Informe o horário de início.'); return; }
+    if (!dia && !$('eIni').value) { $('reply').textContent = 'Informe o horário de início.'; return; }
     $('eEnviar').disabled = true;
     chamar('evento', {
       titulo: $('eTitulo').value, data: $('eData').value, diaTodo: dia,
       inicio: $('eIni').value, fim: $('eFim').value, local: $('eLocal').value
     }, function (r) {
-      $('eEnviar').disabled = false; dizer(r.resposta, r.agente); mostrarAgente(r.agente);
+      $('eEnviar').disabled = false; responder(r.resposta, r.agente);
       $('eTitulo').value = ''; $('eLocal').value = ''; carregar();
     });
   });
@@ -644,9 +637,26 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
     var padrao = agente === 'Atena' ? PADRAO_FEMININO : PADRAO_MASCULINO;
     return vozes.find(function (v) { return padrao.test(v.name); }) || vozes[0];
   }
-  function dizer(texto, agente) {
+
+  // O agente ocupa o núcleo enquanto está falando de verdade (evento onend da fala) e
+  // volta para o Jarvis exatamente quando termina. Sem voz ligada, usamos uma estimativa
+  // de leitura (pelo tamanho do texto) como substituto, já que não há fala para avisar o fim.
+  var falaToken = 0;
+  function responder(texto, agente) {
+    var meuToken = ++falaToken;
+    var nome = AGENTES[agente] ? agente : 'Jarvis';
+    if (nome !== 'Jarvis') assumirNucleo(nome);
     $('reply').textContent = texto;
-    if (!vozOn || !('speechSynthesis' in window)) return;
+
+    function reverter() {
+      if (meuToken === falaToken && nome !== 'Jarvis') assumirNucleo('Jarvis');
+    }
+
+    if (!vozOn || !('speechSynthesis' in window)) {
+      var duracao = Math.min(9000, Math.max(2200, texto.length * 55));
+      setTimeout(reverter, duracao);
+      return;
+    }
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(texto);
@@ -660,6 +670,7 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
       u.onend = u.onerror = function () {
         onda.classList.remove('ativa'); onda.classList.remove('reativa');
         barras.forEach(function (b) { b.style.height = ''; });
+        reverter();
       };
       // Alguns navegadores avisam a cada palavra falada; usamos isso para as barras
       // pularem no ritmo da fala, em vez do loop genérico. Sem esse aviso, o loop
@@ -669,7 +680,9 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
         barras.forEach(function (b) { b.style.height = (4 + Math.random() * 14).toFixed(0) + 'px'; });
       };
       window.speechSynthesis.speak(u);
-    } catch (e) {}
+    } catch (e) {
+      reverter();
+    }
   }
   $('voz').addEventListener('click', function () {
     vozOn = !vozOn;
