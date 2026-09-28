@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel pessoal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #02070d; --bg2: #06121d;
+  --line: rgba(0, 200, 255, .28); --line-strong: rgba(0, 220, 255, .7);
+  --cyan: #19d3ff; --cyan-soft: #7be4ff;
+  --text: #cfefff; --muted: #6fa3b8;
+  --warn: #ffb020; --ok: #3ce8a1; --hot: #ff5a6e;
+  --panel: rgba(4, 22, 36, .72);
+  --display: "Orbitron", "Segoe UI", system-ui, sans-serif;
+  --body: "Rajdhani", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0; min-height: 100vh;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: radial-gradient(ellipse at 50% 0%, #0a2a40 0%, transparent 60%), linear-gradient(var(--bg2), var(--bg));
+  color: var(--text); font-family: var(--body); font-size: 17px; line-height: 1.35; overflow-x: hidden;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .12;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(circle at 50% 30%, #000 0%, transparent 75%);
+}
+main { position: relative; max-width: 980px; margin: 0 auto; padding: 18px 16px 40px; }
+
+.core { display: grid; place-items: center; padding: 8px 0 4px; }
+.reactor { position: relative; width: min(78vw, 320px); aspect-ratio: 1; }
+.reactor svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ring-a { transform-origin: 50% 50%; animation: spin 34s linear infinite; }
+.ring-b { transform-origin: 50% 50%; animation: spin 22s linear infinite reverse; }
+.ring-c { transform-origin: 50% 50%; animation: spin 12s linear infinite; }
+.pulse { transform-origin: 50% 50%; animation: pulse 3.6s ease-in-out infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: .35; } 50% { opacity: .9; } }
+.clock { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.clock .time { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 9vw, 46px); letter-spacing: .04em; color: #eaffff; text-shadow: 0 0 18px rgba(25, 211, 255, .8); }
+.clock .date { margin-top: 4px; color: var(--cyan-soft); font-size: 15px; letter-spacing: .06em; }
+.greet { text-align: center; margin: 10px 0 20px; }
+.greet h1 { margin: 0; font-family: var(--display); font-weight: 500; font-size: clamp(18px, 5vw, 24px); letter-spacing: .08em; color: var(--cyan); text-shadow: 0 0 14px rgba(25, 211, 255, .55); }
+.greet p { margin: 6px 0 0; color: var(--muted); }
+
+.grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .grid { grid-template-columns: 1fr 1fr; } .wide { grid-column: 1 / -1; } }
+
+.card {
+  position: relative; background: var(--panel); border: 1px solid var(--line);
+  padding: 14px 16px 16px; backdrop-filter: blur(4px);
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+}
+.card::before, .card::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--line-strong); }
+.card::before { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.card::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+.card h2 { margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-family: var(--display); font-weight: 500; font-size: 14px; letter-spacing: .1em; color: var(--cyan); }
+.card h2 small { font-family: var(--body); font-size: 14px; letter-spacing: 0; color: var(--muted); font-weight: 500; }
+
+ul.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: flex; gap: 12px; align-items: baseline; padding: 9px 0; border-top: 1px solid rgba(0, 200, 255, .14); }
+.list li:first-child { border-top: 0; }
+.list .when { flex: 0 0 56px; font-family: var(--display); font-size: 13px; color: var(--cyan-soft); }
+.list .what { flex: 1; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+.list .what span { display: block; color: var(--muted); font-weight: 400; font-size: 15px; }
+.list li.done { opacity: .45; }
+.list li.done .what { text-decoration: line-through; }
+.list li.now { background: linear-gradient(90deg, rgba(25, 211, 255, .14), transparent); margin: 0 -8px; padding-left: 8px; padding-right: 8px; border-left: 2px solid var(--cyan); }
+.empty { color: var(--muted); padding: 6px 0; }
+
+.money { display: flex; align-items: center; gap: 16px; }
+.donut { position: relative; width: 116px; height: 116px; flex: 0 0 auto; }
+.donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.donut .center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; font-family: var(--display); font-size: 20px; color: #eaffff; }
+.donut .center small { display: block; font-family: var(--body); font-size: 13px; color: var(--muted); }
+.cats { flex: 1; display: grid; gap: 9px; min-width: 0; }
+.cat .row { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; }
+.bar { height: 5px; background: rgba(0, 200, 255, .14); margin-top: 3px; }
+.bar i { display: block; height: 100%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.bar i.warn { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+.total { margin-top: 12px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; color: var(--muted); font-size: 15px; }
+.total b { color: var(--text); font-weight: 600; }
+
+.tag { font-size: 13px; padding: 1px 8px; border: 1px solid currentColor; font-weight: 600; white-space: nowrap; }
+.tag.hot { color: var(--hot); } .tag.warn { color: var(--warn); } .tag.ok { color: var(--ok); } .tag.mute { color: var(--muted); }
+.amount { font-family: var(--display); font-size: 13px; color: #eaffff; white-space: nowrap; }
+.amount.neg { color: var(--hot); }
+.bill { cursor: pointer; }
+.bill:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+button {
+  font: inherit; font-weight: 600; color: var(--cyan);
+  background: rgba(25, 211, 255, .08); border: 1px solid var(--line-strong);
+  padding: 8px 14px; cursor: pointer; min-height: 40px;
+}
+button:hover { background: rgba(25, 211, 255, .2); }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+button[aria-pressed="false"].toggle { color: var(--muted); border-color: var(--line); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.cmd { display: flex; gap: 8px; }
+.cmd input { flex: 1; min-width: 0; font: inherit; color: var(--text); background: rgba(0, 0, 0, .35); border: 1px solid var(--line); padding: 10px 12px; min-height: 44px; }
+.cmd input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.mic { display: inline-flex; align-items: center; justify-content: center; width: 44px; padding: 0; }
+.mic svg { width: 20px; height: 20px; fill: currentColor; }
+.mic.on { color: #02070d; background: var(--cyan); box-shadow: 0 0 16px var(--cyan); animation: pulse 1.2s ease-in-out infinite; }
+.reply { margin-top: 10px; color: var(--cyan-soft); min-height: 1.4em; overflow-wrap: anywhere; }
+.foot { margin-top: 18px; display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 14px; text-align: center; }
+.aviso { margin-top: 12px; color: var(--warn); font-size: 14px; text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-a, .ring-b, .ring-c, .pulse, .mic.on { animation: none; }
+}
+[hidden] { display: none !important; }
+.login { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(2, 7, 13, .94); padding: 16px; }
+.login form { width: min(92vw, 420px); display: grid; gap: 12px; }
+.login label { display: grid; gap: 4px; color: var(--muted); font-size: 15px; }
+.login input { font: inherit; color: var(--text); background: rgba(0, 0, 0, .35); border: 1px solid var(--line); padding: 10px 12px; min-height: 44px; width: 100%; }
+.login input:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+</style>
+</head>
+<body>
+<div class="login" id="login" hidden>
+  <form class="card" id="loginform">
+    <h2>Conectar ao assistente</h2>
+    <label>Link do Apps Script (termina em /exec)
+      <input id="cfgUrl" type="url" required autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec">
+    </label>
+    <label>Senha do painel
+      <input id="cfgSenha" type="password" required autocomplete="current-password">
+    </label>
+    <div class="reply" id="loginMsg" aria-live="polite"></div>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+<main>
+  <section class="core" aria-label="Relógio">
+    <div class="reactor">
+      <svg viewBox="0 0 300 300" aria-hidden="true">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#19d3ff" stop-opacity=".35"/>
+            <stop offset="70%" stop-color="#19d3ff" stop-opacity=".05"/>
+            <stop offset="100%" stop-color="#19d3ff" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle class="pulse" cx="150" cy="150" r="148" fill="url(#glow)"/>
+        <g class="ring-a" fill="none" stroke="#19d3ff">
+          <circle cx="150" cy="150" r="142" stroke-opacity=".35" stroke-width="1"/>
+          <circle cx="150" cy="150" r="142" stroke-width="3" stroke-dasharray="70 40 12 40" stroke-opacity=".9"/>
+        </g>
+        <g class="ring-b" fill="none" stroke="#7be4ff">
+          <circle cx="150" cy="150" r="124" stroke-width="1.5" stroke-dasharray="2 7" stroke-opacity=".8"/>
+          <circle cx="150" cy="150" r="124" stroke-width="5" stroke-dasharray="26 180" stroke-opacity=".95"/>
+        </g>
+        <g class="ring-c" fill="none" stroke="#19d3ff">
+          <circle cx="150" cy="150" r="106" stroke-width="2" stroke-dasharray="120 30 40 30" stroke-opacity=".7"/>
+        </g>
+        <circle cx="150" cy="150" r="92" fill="rgba(2,12,20,.85)" stroke="#19d3ff" stroke-opacity=".5"/>
+      </svg>
+      <div class="clock">
+        <div class="time" id="time">--:--</div>
+        <div class="date" id="date"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="greet">
+    <h1 id="greeting">Olá</h1>
+    <p id="resumoFrase">Carregando seus dados...</p>
+  </div>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="h-agenda">
+      <h2 id="h-agenda">Agenda de hoje <small id="agendaQtd"></small></h2>
+      <ul class="list" id="agenda"></ul>
+    </section>
+
+    <section class="card" aria-labelledby="h-gastos">
+      <h2 id="h-gastos">Gastos do mês <small id="mesNome"></small></h2>
+      <div class="money">
+        <div class="donut">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(0,200,255,.15)" stroke-width="10"/>
+            <circle id="ring" cx="60" cy="60" r="50" fill="none" stroke="#19d3ff" stroke-width="10"
+              stroke-dasharray="0 314" style="filter: drop-shadow(0 0 6px #19d3ff)"/>
+          </svg>
+          <div class="center"><div><span id="pct">-</span><small>do orçamento</small></div></div>
+        </div>
+        <div class="cats" id="cats"></div>
+      </div>
+      <div class="total"><span>Gasto <b id="spent">-</b></span><span>Orçamento <b id="budget">-</b></span></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-contas">
+      <h2 id="h-contas">Contas a pagar <small>toque para marcar como paga</small></h2>
+      <ul class="list" id="contas"></ul>
+    </section>
+
+    <section class="card" aria-labelledby="h-saldos">
+      <h2 id="h-saldos">Contas e carteiras <small>saldo atual</small></h2>
+      <ul class="list" id="saldos"></ul>
+    </section>
+
+    <section class="card wide" aria-labelledby="h-emails">
+      <h2 id="h-emails">E-mails importantes não lidos <small id="emailsQtd"></small></h2>
+      <ul class="list" id="emails"></ul>
+    </section>
+
+    <section class="card wide" aria-labelledby="h-cmd">
+      <h2 id="h-cmd">Comando</h2>
+      <form class="cmd" id="cmdform">
+        <input id="cmd" type="text" placeholder="Ex.: gastei 45 no mercado no Nubank" autocomplete="off" aria-label="Comando">
+        <button type="button" class="mic" id="mic" aria-label="Falar um comando" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1A7 7 0 0 0 19 12h-2z"/></svg>
+        </button>
+        <button type="submit" id="send">Enviar</button>
+      </form>
+      <div class="reply" id="reply" aria-live="polite">Toque no microfone e fale, ou digite um comando.</div>
+      <div class="actions">
+        <button type="button" data-q="saldo">Ver saldos</button>
+        <button type="button" data-q="o que tenho amanhã?">Agenda de amanhã</button>
+        <button type="button" data-q="como estão meus gastos este mês?">Resumo dos gastos</button>
+        <button type="button" class="toggle" id="voz" aria-pressed="true">Voz de resposta: ligada</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="aviso" id="aviso" hidden></div>
+  <div class="foot">
+    <span id="atualizado">Ainda não atualizado</span>
+    <button type="button" id="atualizar">Atualizar agora</button>
+    <button type="button" id="sair">Sair deste aparelho</button>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = text;
+    return n;
+  }
+  function limpar(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  function brl(v) { return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+
+  /* ---------- relógio ---------- */
+  function tick() {
+    var d = new Date();
+    $('time').textContent = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    $('date').textContent = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+    var h = d.getHours();
+    $('greeting').textContent = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  }
+  tick(); setInterval(tick, 15000);
+
+  /* ---------- renderização ---------- */
+  function vazio(ul, texto) { var li = el('li'); li.appendChild(el('div', 'empty', texto)); ul.appendChild(li); }
+
+  function renderAgenda(itens) {
+    var ul = $('agenda'); limpar(ul);
+    $('agendaQtd').textContent = itens.length ? itens.length + (itens.length === 1 ? ' compromisso' : ' compromissos') : '';
+    if (!itens.length) { vazio(ul, 'Nada agendado para hoje.'); return; }
+    itens.forEach(function (e) {
+      var li = el('li', e.agora ? 'now' : e.passou ? 'done' : '');
+      li.appendChild(el('span', 'when', e.hora));
+      var w = el('div', 'what', e.titulo);
+      if (e.local) w.appendChild(el('span', '', e.local));
+      li.appendChild(w); ul.appendChild(li);
+    });
+  }
+
+  function renderGastos(r) {
+    $('mesNome').textContent = r.mes || '';
+    var box = $('cats'); limpar(box);
+    var visiveis = (r.categorias || []).filter(function (c) { return c.gasto > 0 || c.orcado > 0; });
+    if (!visiveis.length) box.appendChild(el('div', 'empty', 'Nenhum gasto neste mês.'));
+    visiveis.forEach(function (c) {
+      var item = el('div', 'cat');
+      var row = el('div', 'row');
+      row.appendChild(el('span', '', c.nome)); row.appendChild(el('span', '', brl(c.gasto)));
+      var bar = el('div', 'bar'); var i = el('i');
+      var p = c.orcado > 0 ? Math.min(100, Math.round(c.gasto / c.orcado * 100)) : (c.gasto > 0 ? 100 : 0);
+      if (c.orcado > 0 && c.gasto > c.orcado) i.className = 'warn';
+      i.style.width = p + '%';
+      bar.appendChild(i); item.appendChild(row); item.appendChild(bar); box.appendChild(item);
+    });
+    var t = r.total || { orcado: 0, gasto: 0, pct: 0 };
+    $('spent').textContent = brl(t.gasto);
+    $('budget').textContent = t.orcado > 0 ? brl(t.orcado) : 'não definido';
+    var C = 2 * Math.PI * 50;
+    if (t.orcado > 0) {
+      var pc = Math.round(t.pct * 100);
+      $('pct').textContent = pc + '%';
+      $('ring').setAttribute('stroke-dasharray', (Math.min(pc, 100) * C / 100) + ' ' + C);
+    } else {
+      $('pct').textContent = '-';
+      $('ring').setAttribute('stroke-dasharray', '0 ' + C);
+    }
+  }
+
+  function renderContas(itens) {
+    var ul = $('contas'); limpar(ul);
+    if (!itens.length) { vazio(ul, 'Nenhuma conta cadastrada em Contas fixas.'); return; }
+    itens.slice(0, 8).forEach(function (c) {
+      var li = el('li', 'bill' + (c.pago ? ' done' : ''));
+      li.tabIndex = 0; li.setAttribute('role', 'button');
+      li.setAttribute('aria-label', c.nome + ', ' + (c.pago ? 'paga' : 'pendente') + '. Toque para alternar.');
+      li.appendChild(el('span', 'when', c.venc || '-'));
+      li.appendChild(el('div', 'what', c.nome));
+      var cls = c.pago ? 'mute' : c.dias !== null && c.dias < 0 ? 'hot' : c.dias !== null && c.dias <= 7 ? 'warn' : 'ok';
+      var txt = c.pago ? 'Paga' : c.dias === null ? '' : c.dias < 0 ? 'Atrasada' : c.dias === 0 ? 'Hoje' : c.dias + ' d';
+      if (txt) li.appendChild(el('span', 'tag ' + cls, txt));
+      li.appendChild(el('span', 'amount', brl(c.valor)));
+      var acao = function () { alternar(c.nome); };
+      li.addEventListener('click', acao);
+      li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); acao(); } });
+      ul.appendChild(li);
+    });
+  }
+
+  function renderSaldos(itens) {
+    var ul = $('saldos'); limpar(ul);
+    if (!itens.length) { vazio(ul, 'Nenhuma conta cadastrada.'); return; }
+    itens.forEach(function (c) {
+      var li = el('li');
+      var w = el('div', 'what', c.nome); if (c.tipo) w.appendChild(el('span', '', c.tipo));
+      li.appendChild(w);
+      li.appendChild(el('span', 'amount' + (c.saldo < 0 ? ' neg' : ''), brl(c.saldo)));
+      ul.appendChild(li);
+    });
+  }
+
+  function renderEmails(itens) {
+    var ul = $('emails'); limpar(ul);
+    $('emailsQtd').textContent = itens.length ? itens.length + ' na lista' : '';
+    if (!itens.length) { vazio(ul, 'Nenhum e-mail importante não lido nos últimos 7 dias.'); return; }
+    itens.forEach(function (m) {
+      var li = el('li');
+      li.appendChild(el('span', 'when', m.quando.slice(0, 5)));
+      var w = el('div', 'what', m.assunto); w.appendChild(el('span', '', m.de + ', ' + m.quando));
+      li.appendChild(w); ul.appendChild(li);
+    });
+  }
+
+  function render(d) {
+    renderAgenda(d.agenda || []);
+    renderGastos(d.resumo || { categorias: [] });
+    renderContas(d.contasFixas || []);
+    renderSaldos(d.saldos || []);
+    renderEmails(d.emails || []);
+    var agendaQ = (d.agenda || []).length;
+    var aVencer = (d.contasFixas || []).filter(function (c) { return !c.pago && c.dias !== null && c.dias <= 7; }).length;
+    $('resumoFrase').textContent = 'Você tem ' + agendaQ + (agendaQ === 1 ? ' compromisso' : ' compromissos') +
+      ' hoje e ' + aVencer + (aVencer === 1 ? ' conta' : ' contas') + ' para pagar em até 7 dias.';
+    $('atualizado').textContent = 'Atualizado às ' + d.geradoEm;
+    var av = $('aviso');
+    if (d.erros && d.erros.length) { av.hidden = false; av.textContent = 'Alguns blocos não carregaram: ' + d.erros.join(' | '); }
+    else { av.hidden = true; }
+    $('atualizar').disabled = false;
+  }
+
+  /* ---------- servidor ---------- */
+  var CFG = { url: '', senha: '' };
+  try {
+    CFG.url = localStorage.getItem('painel_url') || '';
+    CFG.senha = localStorage.getItem('painel_senha') || '';
+  } catch (e) {}
+
+  function mostrarLogin(msg) {
+    $('loginMsg').textContent = msg || '';
+    $('cfgUrl').value = CFG.url;
+    $('cfgSenha').value = '';
+    $('login').hidden = false;
+    $('atualizar').disabled = false; $('send').disabled = false;
+  }
+  $('loginform').addEventListener('submit', function (e) {
+    e.preventDefault();
+    CFG.url = $('cfgUrl').value.trim();
+    CFG.senha = $('cfgSenha').value;
+    try { localStorage.setItem('painel_url', CFG.url); localStorage.setItem('painel_senha', CFG.senha); } catch (err) {}
+    $('login').hidden = true;
+    carregar();
+  });
+  $('sair').addEventListener('click', function () {
+    try { localStorage.removeItem('painel_url'); localStorage.removeItem('painel_senha'); } catch (e) {}
+    CFG = { url: '', senha: '' };
+    mostrarLogin('');
+  });
+
+  function falhou(err) {
+    $('atualizar').disabled = false; $('send').disabled = false;
+    var m = err && err.message ? err.message : String(err);
+    if (/failed to fetch|networkerror|load failed/i.test(m)) {
+      m = 'Não consegui falar com o Apps Script. Confira o link e se a implantação está com acesso "Qualquer pessoa".';
+    }
+    $('reply').textContent = 'Erro: ' + m;
+  }
+
+  // text/plain evita a checagem prévia (preflight) que o Apps Script não responde.
+  function chamar(acao, valor, ok) {
+    if (!CFG.url || !CFG.senha) { mostrarLogin(''); return; }
+    fetch(CFG.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ senha: CFG.senha, acao: acao, valor: valor })
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j.erro === 'senha') {
+        try { localStorage.removeItem('painel_senha'); } catch (e) {}
+        CFG.senha = ''; mostrarLogin('Senha incorreta.'); return;
+      }
+      if (j.erro) throw new Error(j.erro);
+      ok(j.dados);
+    }).catch(falhou);
+  }
+
+  function carregar() {
+    if (!CFG.url || !CFG.senha) return;
+    $('atualizar').disabled = true;
+    chamar('dados', '', render);
+  }
+  function alternar(nome) {
+    $('reply').textContent = 'Atualizando ' + nome + '...';
+    chamar('alternar', nome, function (r) { dizer(r.resposta); carregar(); });
+  }
+  function enviar(texto) {
+    if (!texto || !texto.trim()) return;
+    $('send').disabled = true; $('reply').textContent = 'Pensando...';
+    chamar('comando', texto, function (r) { $('send').disabled = false; dizer(r.resposta); carregar(); });
+  }
+
+  /* ---------- voz de resposta ---------- */
+  var vozOn = true;
+  function dizer(texto) {
+    $('reply').textContent = texto;
+    if (!vozOn || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(texto);
+      u.lang = 'pt-BR';
+      var v = window.speechSynthesis.getVoices().filter(function (x) { return /^pt/i.test(x.lang); })[0];
+      if (v) u.voice = v;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  $('voz').addEventListener('click', function () {
+    vozOn = !vozOn;
+    this.setAttribute('aria-pressed', String(vozOn));
+    this.textContent = 'Voz de resposta: ' + (vozOn ? 'ligada' : 'desligada');
+    if (!vozOn && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  });
+
+  /* ---------- entrada por texto e botões ---------- */
+  $('cmdform').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var t = $('cmd').value; $('cmd').value = ''; enviar(t);
+  });
+  document.querySelectorAll('.actions button[data-q]').forEach(function (b) {
+    b.addEventListener('click', function () { enviar(b.getAttribute('data-q')); });
+  });
+  $('atualizar').addEventListener('click', carregar);
+
+  /* ---------- microfone ---------- */
+  var mic = $('mic');
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, ouvindo = false;
+  var semMic = 'O microfone não está disponível neste navegador ou nesta tela. Use o microfone do teclado do celular para ditar.';
+  mic.addEventListener('click', function () {
+    if (!SR) { $('reply').textContent = semMic; return; }
+    if (ouvindo && rec) { rec.stop(); return; }
+    try {
+      rec = new SR();
+      rec.lang = 'pt-BR'; rec.interimResults = false; rec.maxAlternatives = 1;
+      rec.onstart = function () { ouvindo = true; mic.classList.add('on'); mic.setAttribute('aria-pressed', 'true'); $('reply').textContent = 'Ouvindo...'; };
+      rec.onend = function () { ouvindo = false; mic.classList.remove('on'); mic.setAttribute('aria-pressed', 'false'); };
+      rec.onerror = function (e) {
+        $('reply').textContent = (e.error === 'not-allowed' || e.error === 'service-not-allowed') ? semMic :
+          (e.error === 'no-speech' ? 'Não ouvi nada. Toque no microfone e tente de novo.' : 'Não consegui ouvir. Tente de novo.');
+      };
+      rec.onresult = function (e) {
+        var texto = e.results[0][0].transcript;
+        $('reply').textContent = 'Você disse: ' + texto;
+        enviar(texto);
+      };
+      rec.start();
+    } catch (err) { $('reply').textContent = semMic; }
+  });
+
+  if (!CFG.url || !CFG.senha) mostrarLogin(''); else carregar();
+  setInterval(carregar, 5 * 60 * 1000);
+})();
+</script>
+</body>
+</html>
