@@ -162,7 +162,8 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
 .hora-pill .time { font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: .04em; color: var(--cyan-soft); background: rgba(0, 200, 255, .08); border: 1px solid var(--line); padding: 3px 14px; border-radius: 20px; display: inline-block; }
 .onda-sonora { position: absolute; left: 50%; bottom: 9%; transform: translateX(-50%); display: flex; align-items: flex-end; gap: 3px; height: 16px; opacity: 0; transition: opacity .25s; pointer-events: none; }
 .onda-sonora.ativa { opacity: 1; }
-.onda-sonora span { width: 3px; border-radius: 2px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); animation: onda 0.9s ease-in-out infinite; }
+.onda-sonora.ativa.reativa span { animation-play-state: paused; }
+.onda-sonora span { width: 3px; border-radius: 2px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan); animation: onda 0.9s ease-in-out infinite; transition: height .1s ease-out; }
 .onda-sonora span:nth-child(1) { animation-delay: 0s; }
 .onda-sonora span:nth-child(2) { animation-delay: .12s; }
 .onda-sonora span:nth-child(3) { animation-delay: .24s; }
@@ -654,8 +655,19 @@ body[data-agente="Jarvis"] { --cyan: #19d3ff; --cyan-soft: #7be4ff; }
       var v = escolherVoz(agente);
       if (v) u.voice = v;
       var onda = $('ondaSonora');
-      u.onstart = function () { onda.classList.add('ativa'); };
-      u.onend = u.onerror = function () { onda.classList.remove('ativa'); };
+      var barras = onda.querySelectorAll('span');
+      u.onstart = function () { onda.classList.add('ativa'); onda.classList.remove('reativa'); };
+      u.onend = u.onerror = function () {
+        onda.classList.remove('ativa'); onda.classList.remove('reativa');
+        barras.forEach(function (b) { b.style.height = ''; });
+      };
+      // Alguns navegadores avisam a cada palavra falada; usamos isso para as barras
+      // pularem no ritmo da fala, em vez do loop genérico. Sem esse aviso, o loop
+      // de CSS continua sozinho.
+      u.onboundary = function () {
+        onda.classList.add('reativa');
+        barras.forEach(function (b) { b.style.height = (4 + Math.random() * 14).toFixed(0) + 'px'; });
+      };
       window.speechSynthesis.speak(u);
     } catch (e) {}
   }
